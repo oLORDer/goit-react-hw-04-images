@@ -1,9 +1,9 @@
 import PropTypes from 'prop-types';
 import s from './imageGallery.module.scss';
 
-export default function ImageGalleryItem({ id, url, largeUrl }) {
+export default function ImageGalleryItem({ id, url, largeUrl, onClickFunc }) {
   const getDataValue = ({ target }) => {
-    this.props.onClickFunc(target.dataset.largeimg);
+    onClickFunc(target.dataset.largeimg);
   };
 
   return (

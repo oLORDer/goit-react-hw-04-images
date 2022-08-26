@@ -9,6 +9,7 @@ import s from './app.module.css';
 
 export function App() {
   const [query, setQuery] = useState('');
+  const [page, setPage] = useState(1);
 
   const hendleFormSubmit = q => {
     if (query === q) {
@@ -16,6 +17,7 @@ export function App() {
       return;
     }
     setQuery(q);
+    setPage(1);
     toast.success('hendleFormSubmit');
   };
 
@@ -23,7 +25,11 @@ export function App() {
     <div className={s.app}>
       <Searchbar onSubmit={hendleFormSubmit} />
       <main>
-        <ImageGallery searchImages={query} />
+        <ImageGallery
+          searchImages={query}
+          page={page}
+          onLoadMore={() => setPage(page + 1)}
+        />
         <ToastContainer autoClose={2000} hideProgressBar={true} />
       </main>
     </div>

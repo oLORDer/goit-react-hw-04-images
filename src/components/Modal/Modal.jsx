@@ -1,40 +1,35 @@
-import { Component } from 'react';
+import { useEffect } from 'react';
 import PropTypes from 'prop-types';
 import s from './modal.module.scss';
 
-export default class Modal extends Component {
-  componentDidMount() {
-    window.addEventListener('keydown', this.modalClose);
-  }
+export default function Modal({ onModalFunc, src }) {
+  useEffect(() => {
+    window.addEventListener('keydown', modalClose);
+    return () => window.removeEventListener('keydown', modalClose);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  componentWillUnmount() {
-    window.removeEventListener('keydown', this.modalClose);
-  }
-
-  onCloseOverlay = e => {
+  const onCloseOverlay = e => {
     if (e.target !== e.currentTarget) {
       return;
     }
-    this.props.onModalFunc(false);
+    onModalFunc(false);
   };
 
-  modalClose = e => {
+  const modalClose = e => {
     if (e.code !== 'Escape') {
       return;
     }
-    this.props.onModalFunc(false);
+    onModalFunc(false);
   };
 
-  render() {
-    const { src } = this.props;
-    return (
-      <div className={s.overlay} onClick={this.onCloseOverlay}>
-        <div className={s.modal}>
-          <img src={src} alt="smt" />
-        </div>
+  return (
+    <div className={s.overlay} onClick={onCloseOverlay}>
+      <div className={s.modal}>
+        <img src={src} alt="smt" />
       </div>
-    );
-  }
+    </div>
+  );
 }
 
 Modal.propTypes = {

@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import { useState, useEffect } from 'react';
 import { nanoid } from 'nanoid';
 import PropTypes from 'prop-types';
 
@@ -10,93 +10,83 @@ import Modal from 'components/Modal/Modal';
 
 import s from './imageGallery.module.scss';
 
-export default class ImageGallery extends Component {
-  state = {
-    images: null,
-    loading: false,
-    page: 1,
-    total: null,
-    largePageSrc: '',
-  };
+export default function ImageGallery({ searchImages, page, onLoadMore }) {
+  const [images, setImages] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [total, setTotal] = useState(null);
+  const [largePageSrc, setLargePageSrc] = useState('');
+  const [error, setError] = useState(null);
 
-  async componentDidUpdate(prevProps, prevState) {
-    const { page } = this.state;
-    const prevImg = prevProps.searchImages;
-    const currentName = this.props.searchImages;
-
-    if (prevImg !== currentName) {
-      try {
-        this.setState({ page: 1, loading: true });
-        const responce = await Pixabay(page, currentName);
-        this.setState({
-          images: responce.data.hits,
-          total: responce.data.total,
-        });
-      } catch (error) {
-        this.setState({ error });
-        console.log(error);
-      } finally {
-        setTimeout(() => {
-          this.setState({ loading: false });
-        }, 1000);
-      }
+  useEffect(() => {
+    if (searchImages && searchImages !== '') {
+      fetchApi();
     }
 
-    if (this.state.page !== prevState.page && this.state.page !== 1) {
+    async function fetchApi() {
       try {
-        this.setState({ loading: true });
-        const responce = await Pixabay(page, currentName);
-        this.setState({
-          images: [...prevState.images, ...responce.data.hits],
-        });
+        setLoading(true);
+        const { data } = await Pixabay(page, searchImages);
+        setImages(data.hits);
+        setTotal(data.total);
       } catch (error) {
-        this.setState({ error });
+        setError(error);
         console.log(error);
       } finally {
-        this.setState({ loading: false });
+        setLoading(false);
       }
     }
-  }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchImages]);
 
-  loadMore = () => {
-    const nextPage = this.state.page + 1;
-    this.setState({ page: nextPage });
+  useEffect(() => {
+    if (searchImages && searchImages !== '' && page !== 1) {
+      fetchApi();
+    }
+
+    async function fetchApi() {
+      try {
+        setLoading(true);
+        const { data } = await Pixabay(page, searchImages);
+        setImages([...images, ...data.hits]);
+        setTotal(data.total);
+      } catch (er) {
+        setError(er);
+        console.log(error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page]);
+
+  const modalOpen = largePageSrc => {
+    setLargePageSrc(largePageSrc);
   };
 
-  modalOpen = largePageSrc => {
-    this.setState({ largePageSrc });
-  };
-
-  render() {
-    const { images, loading, page, total, largePageSrc } = this.state;
-
-    return (
-      <>
-        {loading && <Loader />}
-        {images && (
-          <>
-            <ul className={s.gallery}>
-              {images.map(({ id, webformatURL, largeImageURL }) => (
-                <ImageGalleryItem
-                  key={nanoid()}
-                  id={id}
-                  url={webformatURL}
-                  largeUrl={largeImageURL}
-                  onClickFunc={this.modalOpen}
-                />
-              ))}
-            </ul>
-            {12 * page <= total && (
-              <Button value={'Load more'} onBtnClick={this.loadMore} />
-            )}
-          </>
-        )}
-        {largePageSrc && (
-          <Modal src={largePageSrc} onModalFunc={this.modalOpen} />
-        )}
-      </>
-    );
-  }
+  return (
+    <>
+      {loading && <Loader />}
+      {images && (
+        <>
+          <ul className={s.gallery}>
+            {images.map(({ id, webformatURL, largeImageURL }) => (
+              <ImageGalleryItem
+                key={nanoid()}
+                id={id}
+                url={webformatURL}
+                largeUrl={largeImageURL}
+                onClickFunc={modalOpen}
+              />
+            ))}
+          </ul>
+          {12 * page <= total && (
+            <Button value={'Load more'} onBtnClick={onLoadMore} />
+          )}
+        </>
+      )}
+      {largePageSrc && <Modal src={largePageSrc} onModalFunc={modalOpen} />}
+    </>
+  );
 }
 
 ImageGallery.propTypes = {
